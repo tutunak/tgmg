@@ -50,7 +50,7 @@ func NewTelegramManager() *TelegramManager {
 }
 
 func (tm *TelegramManager) loadBotTokens() {
-	tokenPattern := regexp.MustCompile(`^TGMG_BOT_TOKEN(_.*)?$`)
+	tokenPattern := regexp.MustCompile(`^TGMG_BOT_TOKEN(_.+)?$`)
 
 	for _, env := range os.Environ() {
 		parts := strings.SplitN(env, "=", 2)

@@ -104,7 +104,6 @@ func TestLoadBotTokens(t *testing.T) {
 				"TGMG_BOT_TOKEN_":    "empty_suffix",
 			},
 			expected: []BotConfig{
-				{ID: "", Token: "empty_suffix", Name: "TGMG_BOT_TOKEN_"},
 				{ID: "main", Token: "valid_token", Name: "TGMG_BOT_TOKEN"},
 			},
 		},
@@ -555,12 +554,12 @@ func TestEnvironmentVariableEdgeCases(t *testing.T) {
 			name: "Variables with similar names",
 			envVars: map[string]string{
 				"TGMG_BOT_TOKEN":        "valid1",
-				"TGMG_BOT_TOKEN_":       "valid2", // Empty suffix
+				"TGMG_BOT_TOKEN_":       "invalid", // Empty suffix
 				"TGMG_BOT_TOKEN_PREFIX": "valid3",
 				"TGMG_BOT_TOKENS":       "invalid", // Extra 'S'
 				"MY_TGMG_BOT_TOKEN":     "invalid", // Prefix
 			},
-			expected: 3,
+			expected: 2,
 		},
 	}
 
