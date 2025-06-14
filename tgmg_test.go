@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -29,7 +30,7 @@ func backupEnv() map[string]string {
 func restoreEnv(backup map[string]string) {
 	os.Clearenv()
 	for key, value := range backup {
-		os.Setenv(key, value)
+		_ = os.Setenv(key, value)
 	}
 }
 
@@ -44,10 +45,10 @@ func setupMockServer(responses map[string]mockResponse) *httptest.Server {
 
 		if response, exists := responses[method]; exists {
 			w.WriteHeader(response.StatusCode)
-			fmt.Fprint(w, response.Body)
+			_, _ = fmt.Fprint(w, response.Body)
 		} else {
 			w.WriteHeader(404)
-			fmt.Fprint(w, `{"ok":false,"description":"Method not found"}`)
+			_, _ = fmt.Fprint(w, `{"ok":false,"description":"Method not found"}`)
 		}
 	}))
 }
@@ -137,7 +138,7 @@ func TestLoadBotTokens(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			os.Clearenv()
 			for key, value := range tt.envVars {
-				os.Setenv(key, value)
+				_ = os.Setenv(key, value)
 			}
 
 			tm := NewTelegramManager()
@@ -484,7 +485,7 @@ func TestCommandFlags(t *testing.T) {
 
 			// Set flags
 			for key, value := range tt.flags {
-				cmd.Flags().Set(key, value)
+				_ = cmd.Flags().Set(key, value)
 			}
 
 			// Validate URL requirement
@@ -504,8 +505,8 @@ func TestConcurrentAccess(t *testing.T) {
 	defer restoreEnv(envBackup)
 
 	os.Clearenv()
-	os.Setenv("TGMG_BOT_TOKEN", "token1")
-	os.Setenv("TGMG_BOT_TOKEN_DEV", "token2")
+	_ = os.Setenv("TGMG_BOT_TOKEN", "token1")
+	_ = os.Setenv("TGMG_BOT_TOKEN_DEV", "token2")
 
 	tm := NewTelegramManager()
 
@@ -567,7 +568,7 @@ func TestEnvironmentVariableEdgeCases(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			os.Clearenv()
 			for key, value := range tt.envVars {
-				os.Setenv(key, value)
+				_ = os.Setenv(key, value)
 			}
 
 			tm := NewTelegramManager()
@@ -591,7 +592,9 @@ func (tm *TelegramManager) makeAPIRequestWithURL(urlFormat, token, method string
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 
 	body := make([]byte, 0, resp.ContentLength)
 	buffer := make([]byte, 1024)
@@ -620,7 +623,7 @@ func BenchmarkLoadBotTokens(b *testing.B) {
 
 	os.Clearenv()
 	for i := 0; i < 100; i++ {
-		os.Setenv(fmt.Sprintf("TGMG_BOT_TOKEN_%d", i), fmt.Sprintf("token_%d", i))
+		_ = os.Setenv(fmt.Sprintf("TGMG_BOT_TOKEN_%d", i), fmt.Sprintf("token_%d", i))
 	}
 
 	b.ResetTimer()
